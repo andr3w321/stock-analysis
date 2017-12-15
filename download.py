@@ -1,69 +1,97 @@
 import good_morning as gm
+import requests
+from bs4 import BeautifulSoup
+from helper import sp500_2017
+from yahoo_historical import Fetcher as yf
+import datetime
 
-# Taken from: https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
-# Notes:
-# * Instead of BF-B use BF.B.
-# * Instead of BRK-B use BRK.B.
-sp500_2015_10 = [
-    'A', 'AA', 'AAL', 'AAP', 'AAPL', 'ABBV', 'ABC', 'ABT', 'ACE', 'ACN', 'ADBE',
-    'ADI', 'ADM', 'ADP', 'ADS', 'ADSK', 'ADT', 'AEE', 'AEP', 'AES', 'AET',
-    'AFL', 'AGN', 'AIG', 'AIV', 'AIZ', 'AKAM', 'ALL', 'ALLE', 'ALTR', 'ALXN',
-    'AMAT', 'AME', 'AMG', 'AMGN', 'AMP', 'AMT', 'AMZN', 'AN', 'ANTM', 'AON',
-    'APA', 'APC', 'APD', 'APH', 'ARG', 'ATVI', 'AVB', 'AVGO', 'AVY', 'AXP',
-    'AZO', 'BA', 'BAC', 'BAX', 'BBBY', 'BBT', 'BBY', 'BCR', 'BDX', 'BEN',
-    'BF.B', 'BHI', 'BIIB', 'BK', 'BLK', 'BLL', 'BMY', 'BRCM', 'BRK.B', 'BSX',
-    'BWA', 'BXLT', 'BXP', 'C', 'CA', 'CAG', 'CAH', 'CAM', 'CAT', 'CB', 'CBG',
-    'CBS', 'CCE', 'CCI', 'CCL', 'CELG', 'CERN', 'CF', 'CHK', 'CHRW', 'CI',
-    'CINF', 'CL', 'CLX', 'CMA', 'CMCSA', 'CMCSK', 'CME', 'CMG', 'CMI', 'CMS',
-    'CNP', 'CNX', 'COF', 'COG', 'COH', 'COL', 'COP', 'COST', 'CPB', 'CPGX',
-    'CRM', 'CSC', 'CSCO', 'CSX', 'CTAS', 'CTL', 'CTSH', 'CTXS', 'CVC', 'CVS',
-    'CVX', 'D', 'DAL', 'DD', 'DE', 'DFS', 'DG', 'DGX', 'DHI', 'DHR', 'DIS',
-    'DISCA', 'DISCK', 'DLPH', 'DLTR', 'DNB', 'DO', 'DOV', 'DOW', 'DPS', 'DRI',
-    'DTE', 'DUK', 'DVA', 'DVN', 'EA', 'EBAY', 'ECL', 'ED', 'EFX', 'EIX', 'EL',
-    'EMC', 'EMN', 'EMR', 'ENDP', 'EOG', 'EQIX', 'EQR', 'EQT', 'ES', 'ESRX',
-    'ESS', 'ESV', 'ETFC', 'ETN', 'ETR', 'EW', 'EXC', 'EXPD', 'EXPE', 'F',
-    'FAST', 'FB', 'FCX', 'FDX', 'FE', 'FFIV', 'FIS', 'FISV', 'FITB', 'FLIR',
-    'FLR', 'FLS', 'FMC', 'FOSL', 'FOX', 'FOXA', 'FSLR', 'FTI', 'FTR', 'GAS',
-    'GD', 'GE', 'GGP', 'GILD', 'GIS', 'GLW', 'GM', 'GMCR', 'GME', 'GNW', 'GOOG',
-    'GOOGL', 'GPC', 'GPS', 'GRMN', 'GS', 'GT', 'GWW', 'HAL', 'HAR', 'HAS',
-    'HBAN', 'HBI', 'HCA', 'HCBK', 'HCN', 'HCP', 'HD', 'HES', 'HIG', 'HOG',
-    'HON', 'HOT', 'HP', 'HPQ', 'HRB', 'HRL', 'HRS', 'HSIC', 'HST', 'HSY', 'HUM',
-    'IBM', 'ICE', 'IFF', 'INTC', 'INTU', 'IP', 'IPG', 'IR', 'IRM', 'ISRG',
-    'ITW', 'IVZ', 'JBHT', 'JCI', 'JEC', 'JNJ', 'JNPR', 'JPM', 'JWN', 'K', 'KEY',
-    'KHC', 'KIM', 'KLAC', 'KMB', 'KMI', 'KMX', 'KO', 'KORS', 'KR', 'KSS', 'KSU',
-    'L', 'LB', 'LEG', 'LEN', 'LH', 'LLL', 'LLTC', 'LLY', 'LM', 'LMT', 'LNC',
-    'LOW', 'LRCX', 'LUK', 'LUV', 'LVLT', 'LYB', 'M', 'MA', 'MAC', 'MAR', 'MAS',
-    'MAT', 'MCD', 'MCHP', 'MCK', 'MCO', 'MDLZ', 'MDT', 'MET', 'MHFI', 'MHK',
-    'MJN', 'MKC', 'MLM', 'MMC', 'MMM', 'MNK', 'MNST', 'MO', 'MON', 'MOS', 'MPC',
-    'MRK', 'MRO', 'MS', 'MSFT', 'MSI', 'MTB', 'MU', 'MUR', 'MYL', 'NAVI', 'NBL',
-    'NDAQ', 'NEE', 'NEM', 'NFLX', 'NFX', 'NI', 'NKE', 'NLSN', 'NOC', 'NOV',
-    'NRG', 'NSC', 'NTAP', 'NTRS', 'NUE', 'NVDA', 'NWL', 'NWS', 'NWSA', 'O',
-    'OI', 'OKE', 'OMC', 'ORCL', 'ORLY', 'OXY', 'PAYX', 'PBCT', 'PBI', 'PCAR',
-    'PCG', 'PCL', 'PCLN', 'PCP', 'PDCO', 'PEG', 'PEP', 'PFE', 'PFG', 'PG',
-    'PGR', 'PH', 'PHM', 'PKI', 'PLD', 'PM', 'PNC', 'PNR', 'PNW', 'POM', 'PPG',
-    'PPL', 'PRGO', 'PRU', 'PSA', 'PSX', 'PVH', 'PWR', 'PX', 'PXD', 'PYPL',
-    'QCOM', 'QRVO', 'R', 'RAI', 'RCL', 'REGN', 'RF', 'RHI', 'RHT', 'RIG', 'RL',
-    'ROK', 'ROP', 'ROST', 'RRC', 'RSG', 'RTN', 'SBUX', 'SCG', 'SCHW', 'SE',
-    'SEE', 'SHW', 'SIAL', 'SIG', 'SJM', 'SLB', 'SLG', 'SNA', 'SNDK', 'SNI',
-    'SO', 'SPG', 'SPLS', 'SRCL', 'SRE', 'STI', 'STJ', 'STT', 'STX', 'STZ',
-    'SWK', 'SWKS', 'SWN', 'SYK', 'SYMC', 'SYY', 'T', 'TAP', 'TDC', 'TE', 'TEL',
-    'TGNA', 'TGT', 'THC', 'TIF', 'TJX', 'TMK', 'TMO', 'TRIP', 'TROW', 'TRV',
-    'TSCO', 'TSN', 'TSO', 'TSS', 'TWC', 'TWX', 'TXN', 'TXT', 'TYC', 'UA', 'UAL',
-    'UHS', 'UNH', 'UNM', 'UNP', 'UPS', 'URBN', 'URI', 'USB', 'UTX', 'V', 'VAR',
-    'VFC', 'VIAB', 'VLO', 'VMC', 'VNO', 'VRSK', 'VRSN', 'VRTX', 'VTR', 'VZ',
-    'WAT', 'WBA', 'WDC', 'WEC', 'WFC', 'WFM', 'WHR', 'WM', 'WMB', 'WMT', 'WRK',
-    'WU', 'WY', 'WYN', 'WYNN', 'XEC', 'XEL', 'XL', 'XLNX', 'XOM', 'XRAY', 'XRX',
-    'XYL', 'YHOO', 'YUM', 'ZBH', 'ZION', 'ZTS']
+DATA_FOLDER = "./data/"
 
-kr = gm.KeyRatiosDownloader()
-kr_frames = kr.download('AAPL')
+def download_sp500():
+    """ Print to output, then copy and paste to helper.py """
+    url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies#Recent_changes_to_the_list_of_S&P_500_Components"
+    res = requests.get(url)
+    soup = BeautifulSoup(res.content, "lxml")
+    sp_500 = {}
+    tables = soup.find_all("table")
+    # current tickers
+    trs = tables[0].find_all("tr")
+    for tr in trs:
+        tds = tr.find_all("td")
+        if len(tds) > 0:
+            sp_500[tds[0].find("a").text] = {"name": tds[1].find("a").text, "current": True}
+    # old tickers
+    trs = tables[1].find_all("tr")
+    for tr in trs:
+        tds = tr.find_all("td")
+        if len(tds) > 3 and tds[3].text != "Ticker":
+            if len(tds) == 4:
+                ticker_td = tds[2]
+                name_td = tds[3]
+            else:
+                ticker_td = tds[3]
+                name_td = tds[4]
+            if ticker_td.text != "":
+                sp_500[ticker_td.text] = {"name": name_td.find("a").text, "current": False}
+    return sp_500
+        
+def download_key_ratios(tickers):
+    kr = gm.KeyRatiosDownloader()
+    for ticker in tickers:
+        print(ticker)
+        try:
+            kr_frames = kr.download(ticker)
+            for kr_frame in kr_frames:
+                kr_frame.to_csv("{}{}-{}.csv".format(DATA_FOLDER, ticker, kr_frame.index.name.replace("/","&")))
+        except Exception as e:
+            print("failed", e)
 
-for kr_frame in kr_frames:
-    print(kr_frame.index.name)
+def download_financials(tickers):
+    kr = gm.FinancialsDownloader()
+    for ticker in tickers:
+        print(ticker)
+        try:
+            kr_fins = kr.download(ticker)
+            for key in kr_fins:
+                if key == "currency":
+                    if kr_fins[key] != "USD":
+                        raise ValueError("ERROR non USD currency")
+                    else:
+                        pass
+                elif key in ["period_range","fiscal_year_end"]:
+                    pass
+                else:
+                    kr_fins[key].to_csv("{}{}-{}.csv".format(DATA_FOLDER, ticker, key))
+        except Exception as e:
+            print("failed", e)
 
-kr = gm.FinancialsDownloader()
-kr_fins = kr.download('AAPL')
+    print(ticker, end='')
+    try:
+        kr.download(ticker, conn)
+        fd.download(ticker, conn)
+        time.sleep(1)
+        print(' ... success')
+    except Exception as e:
+        print('failed', e)
 
-for key in kr_fins:
-    print(key)
-    #print(kr_fins[key])
+def download_price_history(tickers):
+    now = datetime.datetime.now()
+    for ticker in tickers:
+        print(ticker)
+        # edge case, morning star uses diff symbols than yahoo finance occasionally
+        if ticker == "BF.B":
+            mod_ticker = "BF-B"
+        elif ticker == "BRK.B":
+            mod_ticker = "BRK-B"
+        else:
+            mod_ticker = ticker
+        try:
+            data = yf(mod_ticker, [1995,1,1], [now.year, now.month, now.day], "1d")
+            data.getHistorical().to_csv("{}{}-price-history.csv".format(DATA_FOLDER, ticker))
+        except Exception as e:
+            print("failed", e)
+
+#download_key_ratios(sp500_2017)
+#download_financials(sp500_2017)
+download_price_history(sp500_2017)
+#print(download_sp500())
